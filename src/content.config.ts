@@ -7,17 +7,27 @@ import { z } from 'astro/zod';
 
 const projects = defineCollection({
 	loader: glob({ pattern: '**/*.md', base: './src/content/projects' }),
-	schema: z.object({
-		title: z.string(),
-		description: z.string(),
-		tags: z.array(z.string()).default([]),
-		status: z.enum(['wip', 'done']).default('done'),
-		featured: z.boolean().default(false),
-		// Lower numbers are listed first.
-		order: z.number().default(100),
-		repo: z.string().optional(),
-		demo: z.string().optional(),
-	}),
+	schema: ({ image }) =>
+		z.object({
+			title: z.string(),
+			description: z.string(),
+			// Tech stack, shown as plain text.
+			tags: z.array(z.string()).default([]),
+			status: z.enum(['wip', 'done']).default('done'),
+			featured: z.boolean().default(false),
+			// Lower numbers are listed first; the lowest featured project is the big one on the home page.
+			order: z.number().default(100),
+			// When and in what capacity, e.g. "2023–2024" and "Game developer · Hackerspace NTNU".
+			period: z.string().optional(),
+			role: z.string().optional(),
+			// One concrete achievement worth calling out, e.g. an award.
+			highlight: z.string().optional(),
+			// Screenshot for the featured slot, relative to the Markdown file.
+			image: image().optional(),
+			imageAlt: z.string().optional(),
+			repo: z.string().optional(),
+			demo: z.string().optional(),
+		}),
 });
 
 const devlog = defineCollection({
