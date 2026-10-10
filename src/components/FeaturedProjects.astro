@@ -1,0 +1,196 @@
+---
+import { Image } from 'astro:assets';
+import { localePath, type Lang } from '../i18n/ui';
+import { entrySlug, type Project } from '../lib/content';
+
+interface Props {
+	/** Featured projects, in display order. The first one gets the large slot. */
+	projects: Project[];
+	lang: Lang;
+}
+
+const { projects, lang } = Astro.props;
+const [lead, ...rest] = projects;
+
+const href = (project: Project) => localePath(lang, `projects/${entrySlug(project)}`);
+const meta = (project: Project) => [project.data.period, project.data.role].filter(Boolean).join(' · ');
+---
+
+{
+	lead && (
+		<a class:list={['lead', { 'has-image': lead.data.image }]} href={href(lead)}>
+			{lead.data.image && (
+				<Image
+					class="shot"
+					src={lead.data.image}
+					alt={lead.data.imageAlt ?? ''}
+					widths={[480, 720, 960]}
+					sizes="(max-width: 40rem) 100vw, 26rem"
+				/>
+			)}
+			<div class="lead-text">
+				{lead.data.highlight && <p class="highlight mono">{lead.data.highlight}</p>}
+				<h3>{lead.data.title}</h3>
+				{meta(lead) && <p class="meta mono">{meta(lead)}</p>}
+				<p class="description">{lead.data.description}</p>
+				{lead.data.tags.length > 0 && <p class="stack mono">{lead.data.tags.join(' · ')}</p>}
+			</div>
+		</a>
+	)
+}
+
+{
+	rest.length > 0 && (
+		<ol class="rows" start="2">
+			{rest.map((project, i) => (
+				<li>
+					<a href={href(project)}>
+						<span class="num mono" aria-hidden="true">
+							{String(i + 2).padStart(2, '0')}
+						</span>
+						<span class="row-text">
+							<span class="title">{project.data.title}</span>
+							{meta(project) && <span class="meta mono">{meta(project)}</span>}
+							<span class="description">{project.data.description}</span>
+						</span>
+						<span class="arrow" aria-hidden="true">
+							→
+						</span>
+					</a>
+				</li>
+			))}
+		</ol>
+	)
+}
+
+<style>
+	a {
+		color: inherit;
+	}
+
+	a:hover {
+		text-decoration: none;
+	}
+
+	h3,
+	.title {
+		transition: color 0.2s;
+	}
+
+	.lead:hover h3,
+	.rows a:hover .title {
+		color: var(--accent);
+	}
+
+	/* The lead project: image beside the text when there is one, full width otherwise. */
+	.lead {
+		display: grid;
+		gap: 1.25rem;
+		align-items: center;
+		padding-bottom: 1.5rem;
+	}
+
+	.lead.has-image {
+		grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+	}
+
+	.shot {
+		width: 100%;
+		height: auto;
+		border-radius: var(--radius);
+		border: 1px solid var(--border);
+	}
+
+	.highlight {
+		margin: 0 0 0.4rem;
+		font-size: 0.75rem;
+		color: var(--accent);
+	}
+
+	h3 {
+		font-size: 1.5rem;
+	}
+
+	.meta {
+		display: block;
+		margin: 0.2rem 0 0;
+		font-size: 0.75rem;
+		color: var(--muted);
+	}
+
+	.description {
+		display: block;
+		max-width: 36rem;
+		margin: 0.5rem 0 0;
+		color: var(--muted);
+		font-size: 0.95rem;
+		line-height: 1.6;
+	}
+
+	.stack {
+		margin: 0.6rem 0 0;
+		font-size: 0.75rem;
+		color: var(--muted);
+	}
+
+	/* The rest: numbered rows. */
+	.rows {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+	}
+
+	.rows li {
+		border-top: 1px solid var(--border);
+	}
+
+	.rows li:last-child {
+		border-bottom: 1px solid var(--border);
+	}
+
+	.rows a {
+		display: grid;
+		grid-template-columns: 2.25rem minmax(0, 1fr) auto;
+		gap: 1rem;
+		padding: 1.1rem 0;
+	}
+
+	.num {
+		padding-top: 0.25rem;
+		font-size: 0.75rem;
+		color: var(--accent);
+	}
+
+	.title {
+		display: block;
+		font-size: 1.1rem;
+		font-weight: 600;
+		letter-spacing: -0.01em;
+	}
+
+	.arrow {
+		color: var(--muted);
+		transition:
+			color 0.2s,
+			transform 0.2s;
+	}
+
+	.rows a:hover .arrow {
+		color: var(--accent);
+		transform: translateX(3px);
+	}
+
+	@media (max-width: 40rem) {
+		.lead.has-image {
+			grid-template-columns: minmax(0, 1fr);
+		}
+
+		.rows a {
+			grid-template-columns: 2rem minmax(0, 1fr);
+		}
+
+		.arrow {
+			display: none;
+		}
+	}
+</style>

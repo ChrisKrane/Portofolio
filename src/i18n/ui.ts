@@ -18,7 +18,7 @@ export const ui = {
 		'hero.title': "Hi, I'm Christer.",
 		'hero.tagline': 'I build various projects and write about them as I go. Currently looking for my next role.',
 		'hero.current': 'currently building:',
-		'home.featured': 'featured projects',
+		'home.featured': 'selected work',
 		'home.latest': 'latest from the devlog',
 		'home.allProjects': 'All projects →',
 		'home.allPosts': 'All posts →',
