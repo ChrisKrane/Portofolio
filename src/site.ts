@@ -2,7 +2,7 @@
 
 export const site = {
 	name: 'Christer',
-	domain: 'christer.dev',
+	domain: 'christerkrane.dev',
 	email: 'christerkrane@gmail.com',
 	links: [
 		{ label: 'GitHub', href: 'https://github.com/ChrisKrane' },

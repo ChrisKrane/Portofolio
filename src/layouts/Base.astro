@@ -25,13 +25,13 @@ const path = Astro.url.pathname;
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
+		<link rel="icon" href="/favicon.ico" sizes="32x32"/>
 		<meta name="generator" content={Astro.generator} />
 		<title>{fullTitle}</title>
 		<meta name="description" content={desc} />
 		<meta property="og:title" content={fullTitle} />
 		<meta property="og:description" content={desc} />
-		{langs.map((l) => <link rel="alternate" hreflang={l === 'no' ? 'nb' : 'en'} href={switchLangPath(path, l)} />)}
+		{langs.map((l) => <link rel="alternate" hreflang={l === 'no' ? 'nb' : 'en'} href={new URL (switchLangPath(path, l), Astro.site)} />)}
 		<script is:inline>
 			// Runs before paint so a saved light theme doesn't flash dark first.
 			try {
