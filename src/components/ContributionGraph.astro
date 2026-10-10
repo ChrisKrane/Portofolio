@@ -1,0 +1,166 @@
+---
+import { useTranslations, type Lang } from '../i18n/ui';
+import { getContributionWeeks } from '../lib/github';
+import { site } from '../site';
+
+interface Props {
+	lang: Lang;
+	/** How many of the most recent weeks to show. */
+	weeks?: number;
+}
+
+const { lang, weeks: weekCount = 26 } = Astro.props;
+const t = useTranslations(lang);
+
+const allWeeks = await getContributionWeeks(site.github);
+const weeks = allWeeks?.slice(-weekCount) ?? [];
+const activeDays = weeks.flat().filter((day) => day.count > 0).length;
+
+const dateFormat = new Intl.DateTimeFormat(lang === 'no' ? 'nb-NO' : 'en-GB', {
+	day: 'numeric',
+	month: 'short',
+	year: 'numeric',
+	timeZone: 'UTC',
+});
+const countLabel = (count: number) =>
+	lang === 'no' ? `${count} bidrag` : `${count} contribution${count === 1 ? '' : 's'}`;
+const tooltip = (date: string, count: number) => `${countLabel(count)} · ${dateFormat.format(new Date(date))}`;
+---
+
+{
+	weeks.length > 0 && (
+		<figure class="activity">
+			<figcaption class="mono">
+				// {activeDays} {t('activity.days')} · {t('activity.period')}
+			</figcaption>
+			<a
+				class="grid"
+				href={`https://github.com/${site.github}`}
+				target="_blank"
+				rel="noopener"
+				aria-label={`${t('activity.label')}: ${activeDays} ${t('activity.days')}`}
+			>
+				{weeks.map((week, i) => (
+					<span class="week" style={i === 0 ? `--offset: ${7 - week.length}` : undefined}>
+						{week.map((day) => (
+							<span class={`day l${day.level}`} data-tip={tooltip(day.date, day.count)} />
+						))}
+					</span>
+				))}
+			</a>
+		</figure>
+	)
+}
+
+<style>
+	.activity {
+		--gap: 2px;
+		/* 12px squares, shrinking on narrow screens so 26 columns always fit inside the 1rem page gutters. */
+		--cell: clamp(7px, calc((100vw - 2rem - 25 * var(--gap)) / 26), 12px);
+		margin: 0;
+	}
+
+	figcaption {
+		margin-bottom: 0.4rem;
+		font-size: 0.7rem;
+		color: var(--muted);
+	}
+
+	.grid {
+		display: flex;
+		gap: var(--gap);
+	}
+
+	.week {
+		display: flex;
+		flex-direction: column;
+		gap: var(--gap);
+	}
+
+	/* A partial first week starts lower down, so weekdays line up across columns. */
+	.week[style] {
+		padding-top: calc(var(--offset) * (var(--cell) + var(--gap)));
+	}
+
+	.day {
+		position: relative;
+		width: var(--cell);
+		height: var(--cell);
+		border-radius: 2px;
+		background: color-mix(in srgb, var(--border) 70%, var(--surface));
+	}
+
+	.day:hover {
+		outline: 1px solid var(--accent);
+		outline-offset: 1px;
+	}
+
+	/* Custom tooltip (the native title tooltip can't be styled). Centred above the square by default. */
+	.day::after {
+		content: attr(data-tip);
+		position: absolute;
+		bottom: calc(100% + 7px);
+		left: 50%;
+		z-index: 2;
+		padding: 0.3rem 0.55rem;
+		border: 1px solid var(--border);
+		border-radius: 6px;
+		background: var(--surface);
+		box-shadow:
+			0 0 0 1px color-mix(in srgb, var(--accent) 25%, transparent),
+			0 6px 16px -6px rgb(0 0 0 / 0.5);
+		color: var(--text);
+		font-family: var(--font-mono);
+		font-size: 0.7rem;
+		line-height: 1.3;
+		white-space: nowrap;
+		pointer-events: none;
+		opacity: 0;
+		transform: translate(-50%, 3px);
+		transition:
+			opacity 0.12s,
+			transform 0.12s;
+	}
+
+	.day:hover::after {
+		opacity: 1;
+		transform: translate(-50%, 0);
+	}
+
+	/* Keep tooltips inside the page at either end of the graph. */
+	.week:nth-child(-n + 6) .day::after {
+		left: 0;
+		transform: translate(0, 3px);
+	}
+
+	.week:nth-child(-n + 6) .day:hover::after {
+		transform: translate(0, 0);
+	}
+
+	.week:nth-last-child(-n + 6) .day::after {
+		left: auto;
+		right: 0;
+		transform: translate(0, 3px);
+	}
+
+	.week:nth-last-child(-n + 6) .day:hover::after {
+		transform: translate(0, 0);
+	}
+
+	.l1 {
+		background: color-mix(in srgb, var(--accent) 30%, var(--surface));
+	}
+
+	.l2 {
+		background: color-mix(in srgb, var(--accent) 55%, var(--surface));
+	}
+
+	.l3 {
+		background: color-mix(in srgb, var(--accent) 80%, var(--surface));
+	}
+
+	.l4 {
+		background: var(--accent);
+		box-shadow: 0 0 6px var(--glow);
+	}
+</style>

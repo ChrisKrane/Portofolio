@@ -1,5 +1,6 @@
 ---
 import Base from '../../../layouts/Base.astro';
+import ContributionGraph from '../../../components/ContributionGraph.astro';
 import ProjectGrid from '../../../components/ProjectGrid.astro';
 import { langStaticPaths, useTranslations, type Lang } from '../../../i18n/ui';
 import { getProjects } from '../../../lib/content';
@@ -14,9 +15,58 @@ const projects = await getProjects(lang);
 <Base lang={lang} title={t('projects.title')}>
 	<div class="container">
 		<header class="page-header">
-			<h1>{t('projects.title')}</h1>
-			<p>{t('projects.intro')}</p>
+			<div>
+				<h1>{t('projects.title')}</h1>
+				<p>{t('projects.intro')}</p>
+			</div>
+			<ContributionGraph lang={lang} />
 		</header>
 		<ProjectGrid projects={projects} lang={lang} />
 	</div>
 </Base>
+
+<style>
+	/*
+	 * Two rows: the graph's caption on top, then the title block beside the squares.
+	 * The graph uses subgrid so the title block stretches to exactly the squares' height,
+	 * with the heading level with the top row and the intro level with the bottom row.
+	 */
+	.page-header {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) auto;
+		grid-template-rows: auto auto;
+		column-gap: 2rem;
+	}
+
+	.page-header > div {
+		grid-column: 1;
+		grid-row: 2;
+		display: flex;
+		flex-direction: column;
+		justify-content: space-between;
+	}
+
+	.page-header > :global(.activity) {
+		grid-column: 2;
+		grid-row: 1 / span 2;
+		display: grid;
+		grid-template-rows: subgrid;
+	}
+
+	@media (max-width: 40rem) {
+		.page-header {
+			grid-template-columns: minmax(0, 1fr);
+			row-gap: 1.5rem;
+		}
+
+		.page-header > div,
+		.page-header > :global(.activity) {
+			grid-column: 1;
+			grid-row: auto;
+		}
+
+		.page-header > :global(.activity) {
+			display: block;
+		}
+	}
+</style>
