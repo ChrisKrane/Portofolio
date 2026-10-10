@@ -1,0 +1,153 @@
+---
+// A slowly rotating sphere of dots for the home page hero. The dots facing the viewer part
+// around the mouse pointer. Hidden on small screens; static for visitors who prefer reduced motion.
+---
+
+<div class="globe" aria-hidden="true">
+	<canvas></canvas>
+</div>
+
+<script>
+	const DOTS = 520;
+	const RADIUS = 0.4; // sphere radius as a share of the canvas size
+	const SPEED = 0.004; // radians per frame
+	const TILT = -0.35; // lean the top towards the viewer
+	const OPENING = 60; // px radius of the opening around the pointer
+	const PUSH = 14; // px the nearest dots are pushed outward
+
+	// Evenly spread points on a unit sphere (Fibonacci lattice).
+	const points: [number, number, number][] = [];
+	for (let i = 0; i < DOTS; i++) {
+		const y = 1 - (i / (DOTS - 1)) * 2;
+		const r = Math.sqrt(1 - y * y);
+		const theta = i * Math.PI * (3 - Math.sqrt(5));
+		points.push([Math.cos(theta) * r, y, Math.sin(theta) * r]);
+	}
+
+	const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+	const cosTilt = Math.cos(TILT);
+	const sinTilt = Math.sin(TILT);
+
+	for (const wrapper of document.querySelectorAll<HTMLElement>('.globe')) {
+		const canvas = wrapper.querySelector('canvas')!;
+		const ctx = canvas.getContext('2d')!;
+		let width = 0;
+		let height = 0;
+		let color = '';
+		let rotation = 0;
+		let strength = 0; // 0..1, eases the opening in and out
+		let pointer = { x: 0, y: 0, inside: false };
+		let smooth = { x: 0, y: 0 };
+		let visible = false;
+		let frame = 0;
+
+		const readColor = () => (color = getComputedStyle(wrapper).getPropertyValue('--accent').trim());
+		readColor();
+		new MutationObserver(readColor).observe(document.documentElement, {
+			attributes: true,
+			attributeFilter: ['data-theme'],
+		});
+
+		new ResizeObserver(() => {
+			const dpr = devicePixelRatio || 1;
+			width = canvas.clientWidth;
+			height = canvas.clientHeight;
+			canvas.width = width * dpr;
+			canvas.height = height * dpr;
+			ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+			draw();
+		}).observe(canvas);
+
+		canvas.addEventListener('pointermove', (event) => {
+			const rect = canvas.getBoundingClientRect();
+			pointer.x = event.clientX - rect.left;
+			pointer.y = event.clientY - rect.top;
+			const radius = Math.min(width, height) * RADIUS;
+			pointer.inside = Math.hypot(pointer.x - width / 2, pointer.y - height / 2) < radius * 1.05;
+			if (strength < 0.01) smooth = { x: pointer.x, y: pointer.y };
+		});
+		canvas.addEventListener('pointerleave', () => (pointer.inside = false));
+
+		function draw() {
+			const radius = Math.min(width, height) * RADIUS;
+			const cosRot = Math.cos(rotation);
+			const sinRot = Math.sin(rotation);
+			ctx.clearRect(0, 0, width, height);
+			ctx.fillStyle = color;
+
+			for (const [x, y, z] of points) {
+				// Rotate around the vertical axis, then tilt towards the viewer.
+				const x1 = x * cosRot + z * sinRot;
+				const z1 = -x * sinRot + z * cosRot;
+				const y2 = y * cosTilt - z1 * sinTilt;
+				const z2 = y * sinTilt + z1 * cosTilt;
+				const depth = (z2 + 1) / 2; // 0 at the back, 1 at the front
+
+				let sx = width / 2 + x1 * radius;
+				let sy = height / 2 + y2 * radius;
+
+				// Push front-facing dots away from the pointer, fading out towards the sphere's edge.
+				if (strength > 0.01 && z2 > -0.2) {
+					const dx = sx - smooth.x;
+					const dy = sy - smooth.y;
+					const dist = Math.hypot(dx, dy);
+					if (dist < OPENING) {
+						const falloff = (1 - dist / OPENING) ** 2;
+						const facing = z2 > 0 ? 1 : (z2 + 0.2) / 0.2;
+						const push = falloff * PUSH * strength * facing;
+						sx += dist ? (dx / dist) * push : 0;
+						sy += dist ? (dy / dist) * push : -push;
+					}
+				}
+
+				ctx.globalAlpha = 0.12 + depth * 0.88;
+				ctx.beginPath();
+				ctx.arc(sx, sy, 0.5 + depth * 1.7, 0, Math.PI * 2);
+				ctx.fill();
+			}
+			ctx.globalAlpha = 1;
+		}
+
+		function tick() {
+			rotation += SPEED;
+			strength += ((pointer.inside ? 1 : 0) - strength) * 0.12;
+			smooth.x += (pointer.x - smooth.x) * 0.3;
+			smooth.y += (pointer.y - smooth.y) * 0.3;
+			draw();
+			frame = requestAnimationFrame(tick);
+		}
+
+		// Only animate while the globe is on screen, displayed, and motion is welcome.
+		function update() {
+			cancelAnimationFrame(frame);
+			if (visible && !reducedMotion.matches) frame = requestAnimationFrame(tick);
+			else draw();
+		}
+		new IntersectionObserver(([entry]) => {
+			visible = entry.isIntersecting;
+			update();
+		}).observe(canvas);
+		reducedMotion.addEventListener('change', update);
+	}
+</script>
+
+<style>
+	.globe {
+		aspect-ratio: 1;
+		width: 100%;
+		max-width: 18rem;
+		justify-self: center;
+	}
+
+	canvas {
+		display: block;
+		width: 100%;
+		height: 100%;
+	}
+
+	@media (max-width: 40rem) {
+		.globe {
+			display: none;
+		}
+	}
+</style>

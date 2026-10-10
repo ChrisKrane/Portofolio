@@ -2,6 +2,7 @@
 import Base from '../../layouts/Base.astro';
 import FeaturedProjects from '../../components/FeaturedProjects.astro';
 import PostList from '../../components/PostList.astro';
+import DotGlobe from '../../components/DotGlobe.astro';
 import { langStaticPaths, localePath, useTranslations, type Lang } from '../../i18n/ui';
 import { entrySlug, getPosts, getProjects } from '../../lib/content';
 
@@ -21,19 +22,28 @@ const currentProject = current && projects.find((p) => entrySlug(p) === current.
 
 <Base lang={lang}>
 	<section class="hero">
-		<div class="container">
-			<p class="eyebrow mono">&gt; {t('hero.eyebrow')}</p>
-			<h1>{t('hero.title')}</h1>
-			<p class="tagline">{t('hero.tagline')}</p>
-			{
-				current && (
-					<a class="current" href={localePath(lang, `devlog/${entrySlug(current)}`)}>
-						<span class="dot" aria-hidden="true" />
-						<span class="mono muted">{t('hero.current')}</span>
-						<span>{currentProject ? `${currentProject.data.title} · ${current.data.title}` : current.data.title}</span>
-					</a>
-				)
-			}
+		<div class="container hero-grid">
+			<div>
+				<p class="eyebrow mono">&gt; {t('hero.eyebrow')}</p>
+				<h1>{t('hero.title')}</h1>
+				<p class="tagline">{t('hero.tagline')}</p>
+				{
+					current && (
+						<a
+							class="current"
+							href={localePath(lang, `devlog/${entrySlug(current)}`)}
+							title={currentProject ? `${currentProject.data.title} · ${current.data.title}` : current.data.title}
+						>
+							<span class="dot" aria-hidden="true" />
+							<span class="mono muted nowrap">{t('hero.current')}</span>
+							<span class="current-title">
+								{currentProject ? `${currentProject.data.title} · ${current.data.title}` : current.data.title}
+							</span>
+						</a>
+					)
+				}
+			</div>
+			<DotGlobe />
 		</div>
 	</section>
 
@@ -85,6 +95,20 @@ const currentProject = current && projects.find((p) => entrySlug(p) === current.
 		mask-image: linear-gradient(#000 40%, transparent);
 	}
 
+	/* Text on the left, globe on the right. The globe hides itself on small screens. */
+	.hero-grid {
+		display: grid;
+		grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+		align-items: center;
+		gap: 1.5rem;
+	}
+
+	@media (max-width: 40rem) {
+		.hero-grid {
+			grid-template-columns: minmax(0, 1fr);
+		}
+	}
+
 	.eyebrow {
 		margin: 0 0 0.75rem;
 		font-size: 0.875rem;
@@ -102,10 +126,11 @@ const currentProject = current && projects.find((p) => entrySlug(p) === current.
 		color: var(--muted);
 	}
 
+	/* Always one line; a long post title is cut off with an ellipsis (the full text is in the title attribute). */
 	.current {
 		display: inline-flex;
 		align-items: center;
-		flex-wrap: wrap;
+		max-width: 100%;
 		gap: 0.5rem;
 		margin-top: 1.5rem;
 		padding: 0.35rem 0.85rem;
@@ -115,6 +140,19 @@ const currentProject = current && projects.find((p) => entrySlug(p) === current.
 		font-size: 0.8rem;
 		color: var(--text);
 		transition: border-color 0.2s;
+	}
+
+	.nowrap,
+	.dot {
+		flex-shrink: 0;
+		white-space: nowrap;
+	}
+
+	.current-title {
+		min-width: 0;
+		overflow: hidden;
+		white-space: nowrap;
+		text-overflow: ellipsis;
 	}
 
 	.current:hover {
