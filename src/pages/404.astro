@@ -1,0 +1,26 @@
+---
+import Base from '../layouts/Base.astro';
+import { localePath, useTranslations } from '../i18n/ui';
+
+// One static 404 page is served for every missing URL, so it shows both languages.
+const en = useTranslations('en');
+const no = useTranslations('no');
+---
+
+<Base lang="en" title={en('notFound.title')}>
+	<div class="container">
+		<header class="page-header">
+			<p class="code mono">404</p>
+			<h1>{en('notFound.title')}</h1>
+			<p>{en('notFound.body')} <a href={localePath('en')}>{en('notFound.home')}</a></p>
+			<p lang="nb">{no('notFound.body')} <a href={localePath('no')}>{no('notFound.home')}</a></p>
+		</header>
+	</div>
+</Base>
+
+<style>
+	.code {
+		margin: 0 0 0.5rem;
+		color: var(--accent);
+	}
+</style>

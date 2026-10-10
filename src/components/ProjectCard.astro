@@ -1,0 +1,117 @@
+---
+import { localePath, useTranslations, type Lang } from '../i18n/ui';
+import { entrySlug, type Project } from '../lib/content';
+
+interface Props {
+	project: Project;
+	lang: Lang;
+	/** Bigger feature variant used for the large cells on the projects page. */
+	large?: boolean;
+}
+
+const { project, lang, large = false } = Astro.props;
+const t = useTranslations(lang);
+const { title, description, tags, status } = project.data;
+---
+
+<a class:list={['card', { large }]} href={localePath(lang, `projects/${entrySlug(project)}`)}>
+	<h3>{title}</h3>
+	<p>{description}</p>
+	<div class="tags">
+		{tags.map((tag) => <span class="tag">{tag}</span>)}
+		{status === 'wip' && <span class="tag accent">{t('status.wip')}</span>}
+	</div>
+</a>
+
+<style>
+	@property --angle {
+		syntax: '<angle>';
+		inherits: false;
+		initial-value: 0deg;
+	}
+
+	.card {
+		position: relative;
+		display: flex;
+		flex-direction: column;
+		gap: 0.4rem;
+		height: 100%;
+		padding: 1rem;
+		background: var(--surface);
+		border: 1px solid var(--border);
+		border-radius: var(--radius);
+		color: var(--text);
+		transition: box-shadow 0.3s;
+	}
+
+	.card:hover {
+		text-decoration: none;
+		box-shadow: 0 0 20px -6px var(--glow);
+	}
+
+	/* A light that travels around the border on hover. */
+	.card::before {
+		content: '';
+		position: absolute;
+		inset: -1px;
+		padding: 1px;
+		border-radius: inherit;
+		background: conic-gradient(from var(--angle), transparent 65%, var(--accent) 85%, transparent 100%);
+		mask:
+			linear-gradient(#000 0 0) content-box,
+			linear-gradient(#000 0 0);
+		mask-composite: exclude;
+		opacity: 0;
+		transition: opacity 0.3s;
+		pointer-events: none;
+	}
+
+	.card:hover::before,
+	.card:focus-visible::before {
+		opacity: 1;
+		animation: orbit 3s linear infinite;
+	}
+
+	@keyframes orbit {
+		to {
+			--angle: 360deg;
+		}
+	}
+
+	h3 {
+		font-size: 0.95rem;
+	}
+
+	p {
+		margin: 0 0 0.4rem;
+		font-size: 0.825rem;
+		line-height: 1.5;
+		color: var(--muted);
+		flex-grow: 1;
+	}
+
+	.large {
+		gap: 0.6rem;
+		padding: 1.5rem;
+		background-image:
+			linear-gradient(var(--grid) 1px, transparent 1px),
+			linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+		background-size: 28px 28px;
+		background-color: var(--surface);
+	}
+
+	.large h3 {
+		font-size: 1.4rem;
+	}
+
+	.large p {
+		font-size: 0.95rem;
+		max-width: 28rem;
+	}
+
+	.tags {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.3rem;
+	}
+</style>

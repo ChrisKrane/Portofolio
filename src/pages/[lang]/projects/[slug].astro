@@ -1,0 +1,98 @@
+---
+import { getCollection, render } from 'astro:content';
+import Base from '../../../layouts/Base.astro';
+import PostList from '../../../components/PostList.astro';
+import { localePath, useTranslations, type Lang } from '../../../i18n/ui';
+import { entryLang, entrySlug, getPosts, type Project } from '../../../lib/content';
+
+export async function getStaticPaths() {
+	const projects = await getCollection('projects');
+	return projects.map((project) => ({
+		params: { lang: entryLang(project), slug: entrySlug(project) },
+		props: { project },
+	}));
+}
+
+const { project } = Astro.props as { project: Project };
+const lang = Astro.params.lang as Lang;
+const t = useTranslations(lang);
+const { Content } = await render(project);
+const { title, description, tags, status, repo, demo } = project.data;
+const posts = (await getPosts(lang)).filter((post) => post.data.project === entrySlug(project));
+---
+
+<Base lang={lang} title={title} description={description}>
+	<div class="container">
+		<header class="page-header">
+			<a class="back mono" href={localePath(lang, 'projects')}>{t('project.back')}</a>
+			<h1>{title}</h1>
+			<p>{description}</p>
+			<div class="meta">
+				<span class:list={['tag', { accent: status === 'wip' }]}>{t(`status.${status}`)}</span>
+				{tags.map((tag) => <span class="tag">{tag}</span>)}
+			</div>
+			{
+				(repo || demo) && (
+					<div class="links">
+						{repo && (
+							<a href={repo} target="_blank" rel="noopener">
+								{t('project.source')} ↗
+							</a>
+						)}
+						{demo && (
+							<a href={demo} target="_blank" rel="noopener">
+								{t('project.demo')} ↗
+							</a>
+						)}
+					</div>
+				)
+			}
+		</header>
+
+		<article class="prose">
+			<Content />
+		</article>
+
+		<section>
+			<h2 class="label">{t('project.devlog')}</h2>
+			{posts.length > 0 ? <PostList posts={posts} lang={lang} /> : <p class="empty">{t('project.noPosts')}</p>}
+		</section>
+	</div>
+</Base>
+
+<style>
+	.back {
+		display: inline-block;
+		margin-bottom: 1rem;
+		font-size: 0.8rem;
+		color: var(--muted);
+	}
+
+	.back:hover {
+		color: var(--accent);
+		text-decoration: none;
+	}
+
+	.meta {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.35rem;
+		margin-top: 1rem;
+	}
+
+	.links {
+		display: flex;
+		gap: 1.25rem;
+		margin-top: 1rem;
+		font-size: 0.9rem;
+	}
+
+	section {
+		margin-top: 3rem;
+	}
+
+	.empty {
+		color: var(--muted);
+		font-size: 0.9rem;
+	}
+</style>

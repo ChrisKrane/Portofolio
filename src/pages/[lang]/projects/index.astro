@@ -1,0 +1,22 @@
+---
+import Base from '../../../layouts/Base.astro';
+import ProjectGrid from '../../../components/ProjectGrid.astro';
+import { langStaticPaths, useTranslations, type Lang } from '../../../i18n/ui';
+import { getProjects } from '../../../lib/content';
+
+export const getStaticPaths = langStaticPaths;
+
+const lang = Astro.params.lang as Lang;
+const t = useTranslations(lang);
+const projects = await getProjects(lang);
+---
+
+<Base lang={lang} title={t('projects.title')}>
+	<div class="container">
+		<header class="page-header">
+			<h1>{t('projects.title')}</h1>
+			<p>{t('projects.intro')}</p>
+		</header>
+		<ProjectGrid projects={projects} lang={lang} />
+	</div>
+</Base>

@@ -1,0 +1,65 @@
+---
+import { getCollection, getEntry, render } from 'astro:content';
+import Base from '../../../layouts/Base.astro';
+import { localePath, useTranslations, type Lang } from '../../../i18n/ui';
+import { entryLang, entrySlug, formatDate, type Post } from '../../../lib/content';
+
+export async function getStaticPaths() {
+	const posts = await getCollection('devlog', (post) => import.meta.env.DEV || !post.data.draft);
+	return posts.map((post) => ({
+		params: { lang: entryLang(post), slug: entrySlug(post) },
+		props: { post },
+	}));
+}
+
+const { post } = Astro.props as { post: Post };
+const lang = Astro.params.lang as Lang;
+const t = useTranslations(lang);
+const { Content } = await render(post);
+const { title, description, date, project: projectSlug, draft } = post.data;
+const project = projectSlug ? await getEntry('projects', `${lang}/${projectSlug}`) : undefined;
+---
+
+<Base lang={lang} title={title} description={description}>
+	<div class="container">
+		<header class="page-header">
+			<a class="back mono" href={localePath(lang, 'devlog')}>{t('post.back')}</a>
+			<h1>{title}</h1>
+			<p class="meta mono">
+				<time datetime={date.toISOString()}>{formatDate(date)}</time>
+				{
+					project && (
+						<>
+							{' · '}
+							{t('post.project')}{' '}
+							<a href={localePath(lang, `projects/${projectSlug}`)}>{project.data.title}</a>
+						</>
+					)
+				}
+				{draft && <span class="tag accent">draft</span>}
+			</p>
+		</header>
+		<article class="prose">
+			<Content />
+		</article>
+	</div>
+</Base>
+
+<style>
+	.back {
+		display: inline-block;
+		margin-bottom: 1rem;
+		font-size: 0.8rem;
+		color: var(--muted);
+	}
+
+	.back:hover {
+		color: var(--accent);
+		text-decoration: none;
+	}
+
+	.page-header .meta {
+		font-size: 0.8rem;
+		margin-top: 0.75rem;
+	}
+</style>

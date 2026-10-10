@@ -1,0 +1,61 @@
+---
+import { useTranslations, type Lang } from '../i18n/ui';
+import { site } from '../site';
+
+interface Props {
+	lang: Lang;
+}
+
+const t = useTranslations(Astro.props.lang);
+---
+
+<footer>
+	<div class="glow-line dim"></div>
+	<div class="container row mono">
+		<span>© {new Date().getFullYear()} {site.name}</span>
+		<span class="links">
+			{
+				site.links.map((link) => (
+					<a href={link.href} target="_blank" rel="noopener">
+						{link.label.toLowerCase()}
+					</a>
+				))
+			}
+			<a href={`mailto:${site.email}`}>{t('footer.contact').toLowerCase()}</a>
+		</span>
+	</div>
+</footer>
+
+<style>
+	footer {
+		margin-top: 4rem;
+	}
+
+	.dim {
+		opacity: 0.5;
+	}
+
+	.row {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: space-between;
+		gap: 0.5rem 1rem;
+		padding-top: 1rem;
+		padding-bottom: 1.5rem;
+		font-size: 0.75rem;
+		color: var(--muted);
+	}
+
+	.links {
+		display: flex;
+		gap: 1rem;
+	}
+
+	.links a {
+		color: var(--muted);
+	}
+
+	.links a:hover {
+		color: var(--accent);
+	}
+</style>

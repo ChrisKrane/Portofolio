@@ -1,0 +1,67 @@
+---
+import { localePath, type Lang } from '../i18n/ui';
+import { entrySlug, formatDate, type Post } from '../lib/content';
+
+interface Props {
+	posts: Post[];
+	lang: Lang;
+	showDescription?: boolean;
+}
+
+const { posts, lang, showDescription = false } = Astro.props;
+---
+
+<ul>
+	{
+		posts.map((post) => (
+			<li>
+				<time class="mono" datetime={post.data.date.toISOString()}>
+					{formatDate(post.data.date)}
+				</time>
+				<div>
+					<a href={localePath(lang, `devlog/${entrySlug(post)}`)}>{post.data.title}</a>
+					{showDescription && <p>{post.data.description}</p>}
+				</div>
+			</li>
+		))
+	}
+</ul>
+
+<style>
+	ul {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		border-top: 1px solid var(--border);
+	}
+
+	li {
+		display: flex;
+		gap: 1rem;
+		padding: 0.7rem 0;
+		border-bottom: 1px solid var(--border);
+	}
+
+	time {
+		flex-shrink: 0;
+		min-width: 5.5rem;
+		padding-top: 0.15rem;
+		font-size: 0.75rem;
+		color: var(--muted);
+	}
+
+	a {
+		color: var(--text);
+	}
+
+	a:hover {
+		color: var(--accent);
+		text-decoration: none;
+	}
+
+	p {
+		margin: 0.15rem 0 0;
+		font-size: 0.875rem;
+		color: var(--muted);
+	}
+</style>

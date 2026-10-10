@@ -1,16 +1,43 @@
 ---
+// The root URL sends visitors to /en/ or /no/: a saved choice first, then the browser language.
 ---
 
-<html lang="en">
+<html lang="en" data-theme="dark">
 	<head>
 		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Christer</title>
+		<link rel="alternate" hreflang="en" href="/en/" />
+		<link rel="alternate" hreflang="nb" href="/no/" />
+		<link rel="alternate" hreflang="x-default" href="/" />
+		<script is:inline>
+			let lang = null;
+			try {
+				lang = localStorage.getItem('lang');
+			} catch {}
+			if (lang !== 'en' && lang !== 'no') {
+				const prefs = navigator.languages || [navigator.language || 'en'];
+				lang = prefs.some((l) => /^(nb|nn|no)\b/i.test(l)) ? 'no' : 'en';
+			}
+			location.replace('/' + lang + '/');
+		</script>
+		<noscript><meta http-equiv="refresh" content="0; url=/en/" /></noscript>
+		<style>
+			body {
+				background: #080b12;
+				color: #8b95a7;
+				font-family: system-ui, sans-serif;
+				display: grid;
+				place-items: center;
+				min-height: 100vh;
+				margin: 0;
+			}
+			a {
+				color: #6d6bff;
+			}
+		</style>
 	</head>
 	<body>
-		<h1>Astro</h1>
+		<p><a href="/en/">English</a> · <a href="/no/">Norsk</a></p>
 	</body>
 </html>

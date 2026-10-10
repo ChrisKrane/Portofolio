@@ -1,0 +1,129 @@
+---
+import { getEntry, render } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import SectionHeading from '../../components/SectionHeading.astro';
+import Timeline from '../../components/Timeline.astro';
+import { langStaticPaths, type Lang } from '../../i18n/ui';
+import { site } from '../../site';
+
+export const getStaticPaths = langStaticPaths;
+
+const lang = Astro.params.lang as Lang;
+const page = await getEntry('pages', `${lang}/about`);
+if (!page) throw new Error(`Missing src/content/pages/${lang}/about.md`);
+const { Content } = await render(page);
+const { title, timelines, skills, languages } = page.data;
+---
+
+<Base lang={lang} title={title}>
+	<div class="container">
+		<header class="page-header">
+			<h1>{title}</h1>
+		</header>
+		<div class="about">
+			<div class="prose intro">
+				<Content />
+			</div>
+
+			{
+				timelines.map((section) => (
+					<section>
+						<SectionHeading text={section.heading} />
+						<Timeline entries={section.entries} />
+					</section>
+				))
+			}
+
+			{
+				skills && (
+					<section>
+						<SectionHeading text={skills.heading} />
+						<dl class="skills">
+							{skills.groups.map((group) => (
+								<div>
+									<dt class="mono">{group.label}</dt>
+									<dd>
+										{group.items.map((item) => (
+											<span class="tag">{item}</span>
+										))}
+									</dd>
+								</div>
+							))}
+						</dl>
+					</section>
+				)
+			}
+
+			{
+				languages && (
+					<section>
+						<SectionHeading text={languages.heading} />
+						<p class="muted">{languages.text}</p>
+					</section>
+				)
+			}
+
+			<p class="contact mono">
+				<a href={`mailto:${site.email}`}>{site.email}</a>
+				{
+					site.links.map((link) => (
+						<a href={link.href} target="_blank" rel="noopener">
+							{link.label} ↗
+						</a>
+					))
+				}
+			</p>
+		</div>
+	</div>
+</Base>
+
+<style>
+	.about {
+		max-width: 42rem;
+	}
+
+	.intro {
+		font-size: 1.05rem;
+	}
+
+	.skills {
+		display: flex;
+		flex-direction: column;
+		gap: 0.9rem;
+		margin: 0;
+	}
+
+	.skills dt {
+		font-size: 0.75rem;
+		color: var(--muted);
+		margin-bottom: 0.4rem;
+	}
+
+	.skills dd {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.35rem;
+		margin: 0;
+	}
+
+	.skills .tag {
+		font-size: 0.75rem;
+		padding: 0.15rem 0.6rem;
+		color: var(--text);
+	}
+
+	.muted {
+		margin: 0;
+		color: var(--muted);
+	}
+
+	.contact {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem 1.25rem;
+		margin-top: 3rem;
+		padding-top: 1.25rem;
+		border-top: 1px solid var(--border);
+		font-size: 0.85rem;
+	}
+</style>
